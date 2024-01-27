@@ -5,18 +5,22 @@
   "main": "server.js",
   "scripts": {
     "test": "\"run\"",
-    "start": "node src/server.js"    
+    "start": "node src/server.js"
   },
   "author": "andrey",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs": "^4.16.0",
+    "@tensorflow/tfjs-node": "^4.16.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
+    "node-base64-image": "^2.0.6",
     "pg": "^8.10.0",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.31.0"
+    "sequelize": "^6.31.0",
+    "uuid": "^9.0.1"
   }
 }

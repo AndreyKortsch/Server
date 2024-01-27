@@ -2,7 +2,7 @@ const { verifySignUp } = require("../middleware");
 
 
 const controller = require("../controller/auth.controller");
-
+const controller2 = require("../controller/image.controller");
 module.exports = function(app) {
  app.use(function(req, res, next) {
  res.header(
@@ -21,4 +21,5 @@ module.exports = function(app) {
  );
  app.get("/api/test/admin", controller.findAll);
  app.post("/api/auth/signin", controller.signin);
+ app.post("/api/auth/image", controller2.sendimage);
 };
