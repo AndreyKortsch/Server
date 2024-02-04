@@ -1,4 +1,5 @@
 const { verifySignUp } = require("../middleware");
+const fs = require('fs');
 
 
 const controller = require("../controller/auth.controller");
@@ -22,4 +23,17 @@ module.exports = function(app) {
  app.get("/api/test/admin", controller.findAll);
  app.post("/api/auth/signin", controller.signin);
  app.post("/api/auth/image", controller2.sendimage);
+ app.get('/api/model', (req, res) => {
+        fs.readFile('./modeljs/model.json', 'utf8', (err, data) => {
+            if (err) {
+                console.error('ќшибка чтени€ файла:', err);
+                res.status(500).send('¬нутренн€€ ошибка сервера');
+                return;
+            }
+            const jsonData = JSON.parse(data);
+
+            // ќтправка содержимого JSON файла как ответ на запрос
+            res.json(jsonData);
+        });
+    });
 };

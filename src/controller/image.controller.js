@@ -134,8 +134,19 @@ const ModelPath = 'file://' + process.cwd().replace(/\\/g, "/") + '/modeljs/mode
 const classPath = './classes/class_names.json';
 // Загрузка модели из файла
 async function loadModel() {
-    const model = await tf.loadLayersModel(ModelPath);
-    console.log('Путь', ModelPath);
+    const MODEL_URL = "http://localhost:8080/model/model.json";
+    const model = await tf.loadGraphModel(MODEL_URL);
+        //.then((model) => {
+        //    console.log("model loaded: ", model);
+        //    return model;
+
+        //})
+       // .catch((error) => {
+       //     console.log("failed to load the model", error);
+       //     throw error;
+       // });
+   // const model = await tf.loadLayersModel(ModelPath);
+    //console.log('Путь', ModelPath);
     return model;
 }
 // Загрузка изображения из файла
@@ -148,67 +159,71 @@ async function loadImage(path) {
 
 // Классификация изображения
 async function classifyImage(req, res, token,imagePath,id) {
+    //try {
+        const model = await loadModel();
+        const image = await loadImage(imagePath);
+        const resizedImage = tf.image.resizeBilinear(image, [100, 100]).toFloat();
+        const batchedImage = resizedImage.expandDims(0);
+        tensor = model.predict(batchedImage);
+        //const predictions = tensor.print();
+        //const crypto = require("crypto");
+        //const id = crypto.randomBytes(16).toString("hex")+".jpg";
+        //console.log(id);
+        const predictedClass = tensor.argMax(1).dataSync()[0];
+        //const id = crypto.randomBytes(16).toString("hex") + ".jpg";
+        //const imagePath = './images/my-image.jpg';
+        //const imagePath = './images/' + id;
+        //const fs = require('fs-extra')
+        // var json_data = await fs.readJson(classPath);
+        // Чтение JSON файла
+        fs.readFile(classPath, 'utf8', (err, data) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
 
-    const model = await loadModel();
-    const image = await loadImage(imagePath);
-    const resizedImage = tf.image.resizeBilinear(image, [100, 100]).toFloat();
-    const batchedImage = resizedImage.expandDims(0);
-    tensor = model.predict(batchedImage);
-    //const predictions = tensor.print();
-    //const crypto = require("crypto");
-    //const id = crypto.randomBytes(16).toString("hex")+".jpg";
-    //console.log(id);
-    const predictedClass = tensor.argMax(1).dataSync()[0];
-    //const id = crypto.randomBytes(16).toString("hex") + ".jpg";
-    //const imagePath = './images/my-image.jpg';
-    //const imagePath = './images/' + id;
-    //const fs = require('fs-extra')
-   // var json_data = await fs.readJson(classPath);
-    // Чтение JSON файла
-    fs.readFile(classPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-
-        // Парсинг JSON данных
-        const jsonData = JSON.parse(data);
-        const className = jsonData[predictedClass];
-        console.log('Предсказанный класс:', className);
-        Image.create({
-            name: id,
-            class: className
-        }).then(image => {
-            User.findOne({
-                where: {
-                    id: token.id
-                }
-            })
-                .then(user => {
-                    image.setUsers(user).then(() => {
-                        res.send({  image });
-                    })
+            // Парсинг JSON данных
+            const jsonData = JSON.parse(data);
+            const className = jsonData[predictedClass];
+            console.log('Предсказанный класс:', className);
+            Image.create({
+                name: id,
+                class: className
+            }).then(image => {
+                User.findOne({
+                    where: {
+                        id: token.id
+                    }
                 })
+                    .then(user => {
+                        image.setUsers(user).then(() => {
+                            res.send({ image });
+                        })
+                    })
 
-            //console.log(jsonData);
-        })
-    });
+                //console.log(jsonData);
+            })
+        });
 
-    //var json_data = require(classPath);
-    //const className = json_data[predictedClass][1];
-    //const classInfo = await fetch(classPath);
-    //const classIndex = await classInfo.json();
-    //const className = classIndex[predictedClass][1];
-    //console.log('Предсказанный класс:', className);
-    //const predictions = tensor.print();
-    //console.log(predictions);
-    data = await tensor.data();
-    //const results = Array.from(data)
-     //   .map((item, i) => ({ probability: item, label: labels[i] }))
-     //   .sort((a1, a2) => a2.probability - a1.probability)
-      //  .slice(0, 5);
-    console.log("Class:",predictedClass) // plain js array
-    //console.log(predictions);
+        //var json_data = require(classPath);
+        //const className = json_data[predictedClass][1];
+        //const classInfo = await fetch(classPath);
+        //const classIndex = await classInfo.json();
+        //const className = classIndex[predictedClass][1];
+        //console.log('Предсказанный класс:', className);
+        //const predictions = tensor.print();
+        //console.log(predictions);
+        data = await tensor.data();
+        //const results = Array.from(data)
+        //   .map((item, i) => ({ probability: item, label: labels[i] }))
+        //   .sort((a1, a2) => a2.probability - a1.probability)
+        //  .slice(0, 5);
+        console.log("Class:", predictedClass) // plain js array
+        //console.log(predictions);
+    //}
+    //catch (mes) {
+    //    res.status(404).send({ message: "Error" });
+    //}
 }
 exports.sendimage = (req, res) => {
     var token = jwt.decode(req.body.accessToken);
