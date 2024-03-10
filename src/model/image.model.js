@@ -7,9 +7,6 @@ autoIncrement: true
 },
 name: {
 type: Sequelize.STRING
-},
-class: {
-type: Sequelize.STRING
 }
 });
 return Image;
