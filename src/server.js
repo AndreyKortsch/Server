@@ -12,8 +12,7 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
- res.json({ message: "Домашняя страница. Бэк работает"
-});
+    res.json({ message: "Домашняя страница. Бэк работает"});
 });
 app.use('/model', express.static(path.join(__dirname, '../modeljs')));
 require('./routes/auth.routes')(app);
