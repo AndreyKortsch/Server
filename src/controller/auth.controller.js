@@ -113,6 +113,7 @@ exports.signup = (req, res) => {
  res.status(500).send({ message: err.message });
  });
 };
+
 exports.signin = (req, res) => {
  User.findOne({
  where: {

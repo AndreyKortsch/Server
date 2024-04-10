@@ -138,15 +138,18 @@ if (req.body.accessToken && req.body.manufactorid) {
         if (!user) {return res.status(404).send({ message: "User Not found." });}
             Manufacturer.findOne({ where: { id: req.body.manufactorid}   })
                 .then(manufacturer => {
-                       Subbrand.findAll({
-                       where: {
-                       manufacturerId: manufacturer.id
-                       },
-                       order: [
-                       ['id', 'ASC']]
-                       })
-                           .then(subbrand => {res.status(200).send({subbrands: subbrand});})
-                    })
+                    if (manufacturer) {
+                        Subbrand.findAll({
+                            where: {
+                                manufacturerId: manufacturer.id
+                            },
+                            order: [
+                                ['id', 'ASC']]
+                        })
+                            .then(subbrand => { res.status(200).send({ subbrands: subbrand }); })
+                    }
+                    else res.status(404).send({ message: "Manufacturer Not found." });
+                })
        })
       .catch(err => {res.status(500).send({ message: err.message });});
     }
@@ -167,14 +170,17 @@ exports.findOneSubbrand = (req, res) => {
                 if (!user) { return res.status(404).send({ message: "User Not found." }); }
                 Subbrand.findOne({ where: { id: req.body.subbrandid } })
                     .then(subbrand => {
-                        Model.findAll({
-                            where: {
-                                subbrandId: subbrand.id
-                            },
-                            order: [
-                                ['id', 'ASC']]
-                        })
-                            .then(model => { res.status(200).send({ models: model }); })
+                        if (subbrand) {
+                            Model.findAll({
+                                where: {
+                                    subbrandId: subbrand.id
+                                },
+                                order: [
+                                    ['id', 'ASC']]
+                            })
+                                .then(model => { res.status(200).send({ models: model }); })
+                        }
+                        else return res.status(404).send({ message: "Subbrand Not found." });
                     })
             })
             .catch(err => { res.status(500).send({ message: err.message }); });
@@ -190,10 +196,10 @@ exports.updateonemodel = (req, res) => {
             .then(model => {
                 if (model) {
                     // Изменяем необходимые поля сущности
-                    model.count += req.body.count;
-                    model.save();
+                    model.count += Number(req.body.count);
+                    return model.save();
                     //model.author = 'Новый автор';
-                     // Сохраняем обновленные данные
+                    // Сохраняем обновленные данные
                     //return model.save();
                 } else {
                     return res.status(404).send({ message: "Сущность не найдена" });
@@ -201,9 +207,15 @@ exports.updateonemodel = (req, res) => {
                 }
             })
             .then(() => {
-                res.status(200).send({ message: "Сущность обновлена успешно" });
-                //console.log('Сущность обновлена успешно');
+                Model.findAll({
+                    where: {
+                        id: req.body.modelid
+                    }
+                }).then(model => {
+                     res.status(200).send({ models: model });
+                })//console.log('Сущность обновлена успешно');
             })
+            
             .catch(error => {
                 res.status(404).send({ message: 'Ошибка обновления сущности:'+ error });
                 //console.error('Ошибка обновления сущности:', error);

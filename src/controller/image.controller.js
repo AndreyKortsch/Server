@@ -3,6 +3,7 @@ const config = require("../config/auth.config");
 const User = db.user;
 const Role = db.role;
 const Image = db.image;
+const Class = db.class;
 const ROLES = db.ROLES;
 const Op = db.Sequelize.Op;
 var jwt = require("jsonwebtoken");
@@ -181,28 +182,49 @@ async function classifyImage(req, res, token,imagePath,id) {
                 console.error(err);
                 return;
             }
-
-            // Парсинг JSON данных
+             // Парсинг JSON данных
             const jsonData = JSON.parse(data);
             const className = jsonData[predictedClass];
             console.log('Предсказанный класс:', className);
-            Image.create({
-                name: id,
-                class: className
-            }).then(image => {
-                User.findOne({
-                    where: {
-                        id: token.id
-                    }
-                })
-                    .then(user => {
-                        image.setUsers(user).then(() => {
-                            res.send({ image });
-                        })
+            User.findOne({
+                where: {
+                    id: token.id
+                }
+            }).then((currentUser) => {
+                // Создание продукта
+                Class.findOne({
+                    where: {name: className}
                     })
+                      .then((currentClass) => {
+                          Image.create({ name: id })
+                            .then((image) => {
+                                image.setUser(currentUser)
+                                    .then((image) => {
+                                        image.setClass(currentClass)                                   
+                                            .then((image) => {
+                                                res.send({ image: { id: image.id, name: image.name, Class: currentClass.name, updatedAt: image.updatedAt, createdAt: image.createdAt } });
+                                            })
 
-                //console.log(jsonData);
-            })
+                        //res.send({image:image});
+                         })
+                        // Успешно установленная связь
+                    }).catch((err) => {
+                        //res.send({ err });
+                        return res.status(404).send({ message: "Ошибка связи" });
+                        // Обработка ошибок при установлении связи
+                    });
+                    }).catch((err) => {
+                        //res.send({ err });
+                        return res.status(404).send({ message: err.message });
+
+                    // Обработка ошибок при создании продукта
+                });
+            }).catch((err) => {
+                //res.send({ err });
+                return res.status(404).send({ message: "Ошибка пользователя" });
+
+                // Обработка ошибок при создании пользователя
+            });
         });
 
         //var json_data = require(classPath);
